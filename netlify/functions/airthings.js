@@ -29,7 +29,7 @@ exports.handler = async (event, context) => {
     // Get credentials from environment variables
     const clientId = process.env.AIRTHINGS_CLIENT_ID;
     const clientSecret = process.env.AIRTHINGS_CLIENT_SECRET;
-    const deviceId = process.env.AIRTHINGS_DEVICE_ID || '2960000893';
+    const deviceId = process.env.AIRTHINGS_DEVICE_ID;
 
     if (!clientId || !clientSecret) {
       throw new Error('Missing API credentials');
