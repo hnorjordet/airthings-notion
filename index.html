@@ -326,10 +326,10 @@
                 // Bedroom metrics (different sensors available)
                 if (data?.co2) metrics.push({ type: 'co2', label: 'CO₂', value: Math.round(data.co2.level), unit: 'ppm', rating: data.co2.rating, color: 'co2' });
                 if (data?.humidity) metrics.push({ type: 'humidity', label: 'Fuktighet', value: `${data.humidity.level}%`, unit: 'RH', rating: data.humidity.rating, color: 'humidity' });
-                if (data?.voc) metrics.push({ type: 'voc', label: 'VOC', value: Math.round(data.voc.level), unit: 'ppb', rating: data.voc.rating, color: 'voc' });
-                if (data?.temperature) metrics.push({ type: 'temp', label: 'Temp', value: `${data.temperature.level}°`, unit: 'Celsius', color: 'temp' });
                 if (data?.noise) metrics.push({ type: 'noise', label: 'Støy', value: Math.round(data.noise.level), unit: 'dBA', rating: data.noise.rating, color: 'noise' });
                 if (data?.light) metrics.push({ type: 'light', label: 'Lys', value: Math.round(data.light.level), unit: 'lux', rating: data.light.rating, color: 'light' });
+                if (data?.voc) metrics.push({ type: 'voc', label: 'VOC', value: Math.round(data.voc.level), unit: 'ppb', rating: data.voc.rating, color: 'voc' });
+                if (data?.temperature) metrics.push({ type: 'temp', label: 'Temp', value: `${data.temperature.level}°`, unit: 'Celsius', color: 'temp' });
             }
             
             // Fill remaining slots with empty metrics
