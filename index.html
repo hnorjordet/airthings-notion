@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Office Air Quality</title>
+    <title>Dual Room Air Quality</title>
     <style>
         * {
             margin: 0;
@@ -22,7 +22,6 @@
 
         .widget {
             background: #191919;
-            backdrop-filter: blur(10px);
             border-radius: 16px;
             padding: 20px 20px 28px 20px;
             border: none;
@@ -44,7 +43,7 @@
         .title-section {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 16px;
         }
 
         .title {
@@ -53,9 +52,31 @@
             font-weight: 600;
         }
 
-        .location {
+        .room-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .room-tab {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
             color: #888;
             font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .room-tab.active {
+            background: rgba(96, 165, 250, 0.2);
+            border-color: rgba(96, 165, 250, 0.3);
+            color: #60a5fa;
+        }
+
+        .room-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ccc;
         }
 
         .status-section {
@@ -116,7 +137,12 @@
             transition: all 0.2s ease;
         }
 
-        .metric:hover {
+        .metric.empty {
+            opacity: 0.3;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .metric:hover:not(.empty) {
             background: rgba(255, 255, 255, 0.06);
             transform: translateY(-1px);
         }
@@ -197,34 +223,12 @@
         /* Responsive for smaller screens */
         @media (max-width: 800px) {
             .metrics-container {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            
-            .metric {
-                flex-basis: calc(33.333% - 8px);
-                min-width: 120px;
-            }
-            
-            .metric-value {
-                font-size: 16px;
+                grid-template-columns: repeat(3, 1fr);
             }
             
             .widget {
                 height: auto;
-                min-height: 160px;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .metric {
-                flex-basis: calc(50% - 8px);
-            }
-            
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
+                min-height: 180px;
             }
         }
 
@@ -249,48 +253,94 @@
     </div>
 
     <script>
+        // Current state
+        let currentRoom = 'office';
+        let roomData = {
+            office: null,
+            bedroom: null
+        };
+
         // Configuration - Update this with your Netlify function URL
-        const API_ENDPOINT = 'https://luminous-muffin-bf22df.netlify.app/.netlify/functions/airthings';
+        const API_ENDPOINT = 'https://luminous-muffin-bf22df.netlify.app/.netlify/functions/airthings-dual';
         
         function getRatingClass(rating) {
-            return `rating-${rating.toLowerCase()}`;
+            return `rating-${rating?.toLowerCase() || 'good'}`;
         }
 
         function getOverallStatus(data) {
-            const ratings = [data.humidity.rating, data.co2.rating, data.radon.rating, data.voc.rating, data.pm25.rating];
+            if (!data) return { status: 'Loading', class: 'status-moderate', dot: 'dot-moderate' };
+            
+            const ratings = [
+                data.humidity?.rating, 
+                data.co2?.rating, 
+                data.radon?.rating, 
+                data.voc?.rating, 
+                data.pm25?.rating
+            ].filter(Boolean);
             
             if (ratings.includes('Poor')) {
                 return { 
                     status: 'Needs Attention', 
                     class: 'status-attention',
-                    dot: 'dot-attention',
-                    message: 'Poor air quality detected' 
+                    dot: 'dot-attention'
                 };
             } else if (ratings.includes('Fair')) {
                 return { 
                     status: 'Moderate', 
                     class: 'status-moderate',
-                    dot: 'dot-moderate',
-                    message: 'Air quality is acceptable' 
+                    dot: 'dot-moderate'
                 };
             } else {
                 return { 
                     status: 'Excellent', 
                     class: 'status-excellent',
-                    dot: 'dot-excellent',
-                    message: 'All parameters optimal' 
+                    dot: 'dot-excellent'
                 };
             }
         }
 
-        function displayData(data) {
+        function switchRoom(room) {
+            currentRoom = room;
+            displayCurrentRoom();
+        }
+
+        function displayCurrentRoom() {
+            const data = roomData[currentRoom];
             const overall = getOverallStatus(data);
+            const roomName = currentRoom === 'office' ? 'Kontor' : 'Soverom';
             
+            // Create metrics array with available data, moving empty ones to the right
+            const metrics = [];
+            
+            // Office metrics (all available)
+            if (currentRoom === 'office') {
+                if (data?.co2) metrics.push({ type: 'co2', label: 'CO₂', value: Math.round(data.co2.level), unit: 'ppm', rating: data.co2.rating, color: 'co2' });
+                if (data?.humidity) metrics.push({ type: 'humidity', label: 'Fuktighet', value: `${data.humidity.level}%`, unit: 'RH', rating: data.humidity.rating, color: 'humidity' });
+                if (data?.pm25) metrics.push({ type: 'pm25', label: 'PM 2.5', value: Math.round(data.pm25.level), unit: 'μg/m³', rating: data.pm25.rating, color: 'pm25' });
+                if (data?.voc) metrics.push({ type: 'voc', label: 'VOC', value: Math.round(data.voc.level), unit: 'ppb', rating: data.voc.rating, color: 'voc' });
+                if (data?.radon) metrics.push({ type: 'radon', label: 'Radon', value: Math.round(data.radon.level), unit: 'Bq/m³', rating: data.radon.rating, color: 'radon' });
+                if (data?.temperature) metrics.push({ type: 'temp', label: 'Temp', value: `${data.temperature.level}°`, unit: 'Celsius', color: 'temp' });
+            } else {
+                // Bedroom metrics (different sensors available)
+                if (data?.co2) metrics.push({ type: 'co2', label: 'CO₂', value: Math.round(data.co2.level), unit: 'ppm', rating: data.co2.rating, color: 'co2' });
+                if (data?.humidity) metrics.push({ type: 'humidity', label: 'Fuktighet', value: `${data.humidity.level}%`, unit: 'RH', rating: data.humidity.rating, color: 'humidity' });
+                if (data?.voc) metrics.push({ type: 'voc', label: 'VOC', value: Math.round(data.voc.level), unit: 'ppb', rating: data.voc.rating, color: 'voc' });
+                if (data?.temperature) metrics.push({ type: 'temp', label: 'Temp', value: `${data.temperature.level}°`, unit: 'Celsius', color: 'temp' });
+            }
+            
+            // Fill remaining slots with empty metrics
+            while (metrics.length < 6) {
+                metrics.push({ empty: true });
+            }
+
             const content = `
                 <div class="header">
                     <div class="title-section">
                         <div class="title">🌬️ Luftkvalitet</div>
-                        <div class="location">Kontor • Regnbueveien 9</div>
+                        <div class="room-tabs">
+                            <div class="room-tab ${currentRoom === 'office' ? 'active' : ''}" onclick="switchRoom('office')">Kontor</div>
+                            <div class="room-tab ${currentRoom === 'bedroom' ? 'active' : ''}" onclick="switchRoom('bedroom')">Soverom</div>
+                        </div>
                     </div>
                     <div class="status-section">
                         <div class="overall-status ${overall.class}">
@@ -310,47 +360,24 @@
                 </div>
                 
                 <div class="metrics-container">
-                    <div class="metric">
-                        <div class="metric-label">CO₂</div>
-                        <div class="metric-value co2">${Math.round(data.co2.level)}</div>
-                        <div class="metric-unit">ppm</div>
-                        <div class="metric-rating ${getRatingClass(data.co2.rating)}">${data.co2.rating}</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">Fuktighet</div>
-                        <div class="metric-value humidity">${Math.round(data.humidity.level)}%</div>
-                        <div class="metric-unit">RH</div>
-                        <div class="metric-rating ${getRatingClass(data.humidity.rating)}">${data.humidity.rating}</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">PM 2.5</div>
-                        <div class="metric-value pm25">${Math.round(data.pm25.level)}</div>
-                        <div class="metric-unit">μg/m³</div>
-                        <div class="metric-rating ${getRatingClass(data.pm25.rating)}">${data.pm25.rating}</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">VOC</div>
-                        <div class="metric-value voc">${Math.round(data.voc.level)}</div>
-                        <div class="metric-unit">ppb</div>
-                        <div class="metric-rating ${getRatingClass(data.voc.rating)}">${data.voc.rating}</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">Radon</div>
-                        <div class="metric-value radon">${Math.round(data.radon.level)}</div>
-                        <div class="metric-unit">Bq/m³</div>
-                        <div class="metric-rating ${getRatingClass(data.radon.rating)}">${data.radon.rating}</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">Temp</div>
-                        <div class="metric-value temp">${Math.round(data.temperature.level)}°</div>
-                        <div class="metric-unit">Celsius</div>
-                        <div style="height: 20px;"></div>
-                    </div>
+                    ${metrics.map(metric => {
+                        if (metric.empty) {
+                            return '<div class="metric empty"></div>';
+                        }
+                        
+                        const ratingHtml = metric.rating ? 
+                            `<div class="metric-rating ${getRatingClass(metric.rating)}">${metric.rating}</div>` : 
+                            '<div style="height: 20px;"></div>';
+                        
+                        return `
+                            <div class="metric">
+                                <div class="metric-label">${metric.label}</div>
+                                <div class="metric-value ${metric.color}">${metric.value}</div>
+                                <div class="metric-unit">${metric.unit}</div>
+                                ${ratingHtml}
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             `;
             
@@ -371,7 +398,11 @@
                     throw new Error(data.error);
                 }
                 
-                displayData(data);
+                // Update room data
+                roomData.office = data.office;
+                roomData.bedroom = data.bedroom;
+                
+                displayCurrentRoom();
                 
             } catch (error) {
                 console.error('Error fetching data:', error);
