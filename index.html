@@ -199,6 +199,8 @@
         .voc { color: #fbbf24; }
         .pm25 { color: #4ade80; }
         .temp { color: #fb7185; }
+        .noise { color: #a78bfa; }
+        .light { color: #fbbf24; }
 
         .loading {
             text-align: center;
@@ -326,6 +328,8 @@
                 if (data?.humidity) metrics.push({ type: 'humidity', label: 'Fuktighet', value: `${data.humidity.level}%`, unit: 'RH', rating: data.humidity.rating, color: 'humidity' });
                 if (data?.voc) metrics.push({ type: 'voc', label: 'VOC', value: Math.round(data.voc.level), unit: 'ppb', rating: data.voc.rating, color: 'voc' });
                 if (data?.temperature) metrics.push({ type: 'temp', label: 'Temp', value: `${data.temperature.level}°`, unit: 'Celsius', color: 'temp' });
+                if (data?.noise) metrics.push({ type: 'noise', label: 'Støy', value: Math.round(data.noise.level), unit: 'dBA', rating: data.noise.rating, color: 'noise' });
+                if (data?.light) metrics.push({ type: 'light', label: 'Lys', value: Math.round(data.light.level), unit: 'lux', rating: data.light.rating, color: 'light' });
             }
             
             // Fill remaining slots with empty metrics
