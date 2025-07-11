@@ -138,12 +138,15 @@ exports.handler = async (event, context) => {
       temperature: {
         level: bedroomRawData.temp || 0
       },
-      // Wave Enhance specific sensors
-      pressure: {
-        level: bedroomRawData.pressure || 0
+      // Wave Enhance specific sensors to fill the remaining slots
+      noise: {
+        level: bedroomRawData.noise || bedroomRawData.sound || 0,
+        rating: getNoiseRating(bedroomRawData.noise || bedroomRawData.sound || 0)
       },
-      // Note: noise and light sensors may have different property names
-      // Check actual API response and adjust accordingly
+      light: {
+        level: bedroomRawData.light || bedroomRawData.illuminance || 0,
+        rating: getLightRating(bedroomRawData.light || bedroomRawData.illuminance || 0)
+      }
     } : null;
 
     return {
@@ -198,4 +201,16 @@ function getPM25Rating(pm25) {
   if (pm25 <= 10) return 'Good';
   if (pm25 <= 25) return 'Fair';
   return 'Poor';
+}
+
+function getNoiseRating(noise) {
+  if (noise <= 40) return 'Good';    // Quiet (library-like)
+  if (noise <= 55) return 'Fair';    // Moderate (normal conversation)
+  return 'Poor';                     // Loud (busy street)
+}
+
+function getLightRating(light) {
+  if (light <= 50) return 'Good';    // Dark/dim (good for sleep)
+  if (light <= 200) return 'Fair';   // Moderate lighting
+  return 'Poor';                     // Bright (not ideal for bedroom)
 }
