@@ -138,14 +138,14 @@ exports.handler = async (event, context) => {
       temperature: {
         level: bedroomRawData.temp || 0
       },
-      // Wave Enhance specific sensors to fill the remaining slots
+      // Wave Enhance specific sensors - try multiple property names
       noise: {
-        level: bedroomRawData.noise || bedroomRawData.sound || 0,
-        rating: getNoiseRating(bedroomRawData.noise || bedroomRawData.sound || 0)
+        level: bedroomRawData.sla || bedroomRawData.noise || bedroomRawData.ambient_noise || bedroomRawData.sound || 0,
+        rating: getNoiseRating(bedroomRawData.sla || bedroomRawData.noise || bedroomRawData.ambient_noise || bedroomRawData.sound || 0)
       },
       light: {
-        level: bedroomRawData.light || bedroomRawData.illuminance || 0,
-        rating: getLightRating(bedroomRawData.light || bedroomRawData.illuminance || 0)
+        level: bedroomRawData.lux || bedroomRawData.light || bedroomRawData.illuminance || bedroomRawData.ambient_light || 0,
+        rating: getLightRating(bedroomRawData.lux || bedroomRawData.light || bedroomRawData.illuminance || bedroomRawData.ambient_light || 0)
       }
     } : null;
 
